@@ -17,23 +17,25 @@ int main(int argc, char *argv[]) {
   int n_read = 0, i;
 
   VAD_DATA *vad_data;
-  VAD_STATE state, last_state;
+  VAD_STATE state, last_state, former_state; // "former" is the state for comparison purposes and to be included in vadfile
 
   float *buffer, *buffer_zeros;
   int frame_size;         /* in samples */
   float frame_duration;   /* in seconds */
-  unsigned int t, last_t; /* in frames */
-  float alpha1; // Modificado
-
+  unsigned int t, last_t, ini_maybe; /* in frames */ // "ini_maybe" is the frame when a MAYBE state starts
+  
   char	*input_wav, *output_vad, *output_wav;
 
   DocoptArgs args = docopt(argc, argv, /* help */ 1, /* version */ "2.0");
+  float alpha0 = atof(args.alpha0);
+  float alpha1 = atof(args.alpha1); 
+  float alpha2 = atof(args.alpha2);
+  float t_remaining = atof(args.t_remaining); // t_remaining is the remaining time till a MAYBE state is confirmed or not. Initially it is the original time, taken from docopt file
 
   verbose    = args.verbose ? DEBUG_VAD : 0;
   input_wav  = args.input_wav;
   output_vad = args.output_vad;
   output_wav = args.output_wav;
-  alpha1 = atof(args.alpha1); // Modificado
 
   if (input_wav == 0 || output_vad == 0) {
     fprintf(stderr, "%s\n", args.usage_pattern);
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  vad_data = vad_open(sf_info.samplerate, alpha1); // Modificado
+  vad_data = vad_open(sf_info.samplerate, alpha0, alpha1, alpha2, t_remaining); 
   /* Allocate memory for buffers */
   frame_size   = vad_frame_size(vad_data);
   buffer       = (float *) malloc(frame_size * sizeof(float));
@@ -73,14 +75,17 @@ int main(int argc, char *argv[]) {
   for (i=0; i< frame_size; ++i) buffer_zeros[i] = 0.0F;
 
   frame_duration = (float) frame_size/ (float) sf_info.samplerate;
-  last_state = ST_UNDEF;
+  
+  // We initialize last_state for the first loop in the following for
+  last_state = ST_INIT;
+
 
   for (t = last_t = 0; ; t++) { /* For each frame ... */
     /* End loop when file has finished (or there is an error) */
     if  ((n_read = sf_read_float(sndfile_in, buffer, frame_size)) != frame_size) break;
 
     if (sndfile_out != 0) {
-      /* TODO: copy all the samples into sndfile_out */
+      /* TODO: copy all the samples into sndfile_out */ 
     }
 
     state = vad(vad_data, buffer);
@@ -88,22 +93,41 @@ int main(int argc, char *argv[]) {
 
     /* TODO: print only SILENCE and VOICE labels */
     /* As it is, it prints UNDEF segments but is should be merge to the proper value */
-    if (state != last_state) {
-      if (t != last_t)
-        fprintf(vadfile, "%.5f\t%.5f\t%s\n", last_t * frame_duration, t * frame_duration, state2str(last_state));
+    if (state != last_state){ // Action is only needed if state has changed
+      if (state == ST_MAYBE_SILENCE || state == ST_MAYBE_VOICE){
+        // if new state is MAYBE_* we update the former_state and set the start frame of a MAYBE sequence in ini_maybe
+        former_state = last_state;
+        ini_maybe = t;
+      }      
+      if ((last_state == ST_MAYBE_SILENCE && state == ST_SILENCE) || (last_state == ST_MAYBE_VOICE && state == ST_VOICE)){
+        // Action is only needed when we confirm the change in the state (to SILENCE or VOICE)
+        fprintf(vadfile, "%.5f\t%.5f\t%s\n", last_t * frame_duration, ini_maybe * frame_duration, state2str(former_state));
+        last_t = ini_maybe;
+      }
       last_state = state;
-      last_t = t;
-    }
+
+    } 
 
     if (sndfile_out != 0) {
       /* TODO: go back and write zeros in silence segments */
     }
-  }
+  } // end for
 
   state = vad_close(vad_data);
   /* TODO: what do you want to print, for last frames? */
-  if (t != last_t)
-    fprintf(vadfile, "%.5f\t%.5f\t%s\n", last_t * frame_duration, t * frame_duration + n_read / (float) sf_info.samplerate, state2str(state));
+  if (t != last_t){ // This means that there are still reamining frames
+    switch (state) {
+      case ST_MAYBE_VOICE: // We confirm SILENCE state
+        fprintf(vadfile, "%.5f\t%.5f\t%s\n", last_t * frame_duration, t * frame_duration + n_read / (float) sf_info.samplerate, state2str(ST_SILENCE));
+        break;
+      case ST_MAYBE_SILENCE: // We confirm VOICE state
+        fprintf(vadfile, "%.5f\t%.5f\t%s\n", last_t * frame_duration, t * frame_duration + n_read / (float) sf_info.samplerate, state2str(ST_VOICE));
+        break;
+      default: // state is already VOICE or SILENCE
+        fprintf(vadfile, "%.5f\t%.5f\t%s\n", last_t * frame_duration, t * frame_duration + n_read / (float) sf_info.samplerate, state2str(state));
+        break;
+    }
+  }
 
   /* clean up: free memory, close open files */
   free(buffer);

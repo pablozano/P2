@@ -105,15 +105,39 @@ Ejercicios
   continuación, una captura de `wavesurfer` en la que se vea con claridad la señal temporal, el contorno de
   potencia y la tasa de cruces por cero, junto con el etiquetado manual de los segmentos.
 
+	> El etiquetado manual de los segmentos de voz y silencio se adjunta en las siguientes capturas:
+	>
+	> <img src="img/etiquetado_manual_1" width="800" align="center">
+	> <img src="img/etiquetado_manual_2" width="800" align="center">
 
 - A la vista de la gráfica, indique qué valores considera adecuados para las magnitudes siguientes:
 
 	* Incremento del nivel potencia en dB, respecto al nivel correspondiente al silencio inicial, para
 	  estar seguros de que un segmento de señal se corresponde con voz.
 
+	> En el silencio inicial tenemos aproximadamente **20 dB**, que augmentan a un valor de entre
+	> **40 y 60 dB ** cuando empieza un tramo de voz. Por tanto, un incremento de entre **20 y 40 dB**
+	> parece un valor razonable.
+	>
+	> Observando el gráfico de potencia, a priori parece que podríamos establecer un umbral para detectar 
+	> si estamos ante sonido o silencio. Por ejemplo, los segmentos iguales o mayores a **50dB** podrían 
+	> considerarse sonido, mientras que el resto sería silencio. Este criterio podría funcionar con nuestra 
+	> grabación, pero no tiene por qué funcionar con el resto de grabaciones de la base de datos, ya que 
+	> algunas podrían tener segmentos de sonido con menos potencia, mayor ruido de fondo, etc.
+
 	* Duración mínima razonable de los segmentos de voz y silencio.
 
+	> La duración mínima del segmento de voz y silencio más pequeños es de **0.4 seg = 400 mseg**.
+	> Hay segmentos de voz en los que se produce fraseo y se juntan dos o más palabras cortas, obviando 
+	> los silencios intermedios, por lo que estos segmentos de voz son de mayor duración.
+
 	* ¿Es capaz de sacar alguna conclusión a partir de la evolución de la tasa de cruces por cero?
+
+	> Si nos fijamos de nuevo en el gráfico y, tenemos en cuenta la frase de voz que representa la señal: 
+	> *Marc, Pablo, estamos en el lab de PAV y nos pican los mosquitos*. Podemos llegar a comprobar que, 
+	> en cada segmento de sonido, se pueden distinguir los sonidos sonoros de los sordos, puesto que los 
+	> sonidos sonoros tienen menos cruces por cero (zcr) y mayor energía; por contra, los sonidos sordos 
+	> tienen más cruces por cero y muy poca energía.
 
 
 ### Desarrollo del detector de actividad vocal
@@ -124,12 +148,28 @@ Ejercicios
 - Inserte una gráfica en la que se vea con claridad la señal temporal, el etiquetado manual y la detección
   automática conseguida para el fichero grabado al efecto. 
 
+	> <img src="img/detección_automática_1" width="800" align="center">
+	> <img src="img/detección_automática_2" width="800" align="center">
 
 - Explique, si existen. las discrepancias entre el etiquetado manual y la detección automática.
+
+	> En WaveSurfer vemos como el etiquetado automático marca, erróneamente, segmentos cortos de voz en 
+	> segmentos de silencio etiquetados manualmente. Sin embargo, el etiquetado automático sí que es 
+	> bastante fiel respecto al etiquetado manual en los segmentos de voz, ya que marca realmente bien el 
+	> inicio y final de éstos.
 
 - Evalúe los resultados sobre la base de datos `db.v4` con el script `vad_evaluation.pl` e inserte a 
   continuación las tasas de sensibilidad (*recall*) y precisión para el conjunto de la base de datos (sólo
   el resumen).
+
+	> En los resultados observamos que la precisión da un valor muy parecido en voz y silencio, cercano 
+	> al **90%**. Sin embargo, la tasa de sensibilidad (*recall*) en silencio es aproximádamente un **8%**
+	> menor respecto al recall en voz. Este hecho se puede relacionar a las discrepancias observadas al
+	> comparar el etiquetado manual y la detección automática, ya que, como hemos visto anteriormente, con
+	> la detección automática obtenemos más silencios que se marcan como voz, pero no tantos segmentos de voz
+	> que se marquen como silencio. Finalmente, obtenemos un *F-score* total de **90.61%**.
+	>
+	> <img src="img/summary" width="800" align="center">
 
 
 ### Trabajos de ampliación
@@ -145,6 +185,7 @@ Ejercicios
 - Si ha usado `docopt_c` para realizar la gestión de las opciones y argumentos del programa `vad`, inserte
   una captura de pantalla en la que se vea el mensaje de ayuda del programa.
 
+	> <img src="img/docopt" width="800" align="center">
 
 ### Contribuciones adicionales y/o comentarios acerca de la práctica
 
@@ -153,6 +194,12 @@ Ejercicios
 
 - Si lo desea, puede realizar también algún comentario acerca de la realización de la práctica que
   considere de interés de cara a su evaluación.
+
+	> Al principio pensamos que la entrega de la memoria se debía hacer en un PDF explicando cada una de 
+	> las tareas que aparecían en el enunciado, tal y como se hizo con la primera práctica. Pero más tarde
+	> vimos que la entrega se hacía en este fichero *README*. Sin embargo, hacer ese trabajo previo nos ha 
+	> ayudado a saber manejar mejor las nuevas herramientas vistas durante la realización de esta práctica,
+	> y hemos decido incluirlo en la carpeta subida a GitHub.
 
 
 ### Antes de entregar la práctica

@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "vad.h"
-#include "pav_analysis.h" // modificado
+#include "pav_analysis.h" 
 
 const float FRAME_TIME = 10.0F; /* in ms. */
 
@@ -14,7 +14,7 @@ const float FRAME_TIME = 10.0F; /* in ms. */
  */
 
 const char *state_str[] = {
-  "UNDEF", "S", "V", "INIT"
+  "MAYBE_SILENCE", "MAYBE_VOICE", "S", "V", "INIT"
 };
 
 const char *state2str(VAD_STATE st) {
@@ -43,9 +43,9 @@ Features compute_features(const float *x, int N) {
    * For the moment, compute random value between 0 and 1 
    */
   Features feat;
-  feat.zcr = compute_zcr(x, N, 16000); // modificado
-  feat.p = compute_power(x, N); // modificado
-  feat.am = compute_am(x, N); // modificado
+  feat.zcr = compute_zcr(x, N, 16000); 
+  feat.p = compute_power(x, N); 
+  feat.am = compute_am(x, N); 
   return feat;
 }
 
@@ -53,12 +53,15 @@ Features compute_features(const float *x, int N) {
  * TODO: Init the values of vad_data
  */
 
-VAD_DATA * vad_open(float rate, float alpha1) { // modificado
+VAD_DATA *vad_open(float rate, float alpha0, float alpha1, float alpha2, float t_remaining_orig) { 
   VAD_DATA *vad_data = malloc(sizeof(VAD_DATA));
   vad_data->state = ST_INIT;
   vad_data->sampling_rate = rate;
   vad_data->frame_length = rate * FRAME_TIME * 1e-3;
-  vad_data->alpha1 = alpha1; // modificado
+  vad_data->alpha0 = alpha0; 
+  vad_data->alpha1 = alpha1;
+  vad_data->alpha2 = alpha2;
+  vad_data->t_remaining_orig = t_remaining_orig; // t_remaining_orig is the maximum time for a MAYBE state. Initially it is the remaining time, taken from docopt file
   return vad_data;
 }
 
@@ -90,32 +93,56 @@ VAD_STATE vad(VAD_DATA *vad_data, float *x) {
 
   Features f = compute_features(x, vad_data->frame_length);
   vad_data->last_feature = f.p; /* save feature, in case you want to show */
-
+  
   switch (vad_data->state) {
   case ST_INIT:
-    vad_data->p1 = f.p + 9; //(dB) Modificado
+    // First time we initiate k0 and k1 for further usage and move state to silence, according to instructions
+    vad_data->k0 = f.p + vad_data->alpha0; 
+    vad_data->k1 = vad_data->k0 + vad_data->alpha1; 
     vad_data->state = ST_SILENCE;
     break;
 
   case ST_SILENCE:
-    if (f.p > vad_data->p1)
-      vad_data->state = ST_VOICE;
+    if (f.p > vad_data->k0){
+      // We move to MAYBE_VOICE if we are over the threshold and start counting the time on that state
+      vad_data->t_remaining = vad_data->t_remaining_orig;
+      vad_data->state = ST_MAYBE_VOICE;
+    }
     break;
 
   case ST_VOICE:
-    if (f.p < vad_data->p1)
-      vad_data->state = ST_SILENCE;
+    if (f.p < vad_data->k0){
+      // We move to MAYBE_SILENCE if we are under the threshold and start counting the time on that state
+      vad_data->t_remaining = vad_data->t_remaining_orig;
+      vad_data->zcr = f.zcr + vad_data->alpha2; // zcr is initiated for further usage as we move to state MAYBE_SILENCE
+      vad_data->state = ST_MAYBE_SILENCE;
+    }  
     break;
-
-  case ST_UNDEF: // Cambiar por maybe silence y maybe voice
+  
+  case ST_MAYBE_SILENCE:
+    if (vad_data->t_remaining > 0){ // Whether there is time remaining 
+      if (f.zcr > vad_data->zcr) vad_data->state = ST_VOICE; // We move to VOICE if zcr is overcome
+      else if (f.p < vad_data->k1) vad_data->state = ST_SILENCE; // We move to SILENCE if k1 is undercome
+      else // Otherwise we remain in MAYBE_SILENCE and reduce the remaining time
+        vad_data->t_remaining = vad_data->t_remaining - vad_data->frame_length;
+    } 
+    else
+      vad_data->state = ST_VOICE; // Once remaining time has expired, we move back to VOICE
     break;
-  }
-
-  if (vad_data->state == ST_SILENCE ||
-      vad_data->state == ST_VOICE)
-    return vad_data->state;
-  else
-    return ST_UNDEF;
+  
+  case ST_MAYBE_VOICE:
+    if (vad_data->t_remaining > 0){ // Whether there is time remaining
+      if (f.p > vad_data->k1) vad_data->state = ST_VOICE; // We move to VOICE if k1 is overcome
+      else if (f.zcr < vad_data->zcr) vad_data->state = ST_SILENCE; // We move to SILENCE if zcr is undercome
+      else // Otherwise we remain in MAYBE_VOICE and reduce the remaining time      
+        vad_data->t_remaining = vad_data->t_remaining - vad_data->frame_length;
+    } 
+    else
+      vad_data->state = ST_SILENCE; // Once remaining time has expired, we move back to SILENCE
+    break;
+  } 
+  
+return vad_data->state;
 }
 
 void vad_show_state(const VAD_DATA *vad_data, FILE *out) {

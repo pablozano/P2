@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 /* TODO: add the needed states */
-typedef enum {ST_UNDEF=0, ST_SILENCE, ST_VOICE, ST_INIT} VAD_STATE;
+typedef enum {ST_MAYBE_VOICE=0, ST_MAYBE_SILENCE, ST_SILENCE, ST_VOICE, ST_INIT} VAD_STATE;
 
 /* Return a string label associated to each state */
 const char *state2str(VAD_STATE st);
@@ -12,19 +12,21 @@ const char *state2str(VAD_STATE st);
    (counts, thresholds, etc.) */
 
 typedef struct {
-  VAD_STATE state;
-  float sampling_rate;
-  unsigned int frame_length;
-  float last_feature; /* for debuggin purposes */
-  float p1; // Modificado
-  float alpha1; // Modificado
+   VAD_STATE state;
+   float sampling_rate;
+   unsigned int frame_length;
+   float k0, k1, k2; 
+   float alpha0, alpha1, alpha2; 
+   float t_remaining, t_remaining_orig; // t_remaining is the remaining time till a MAYBE state is confirmed or not. t_remaining_orig is the maximum time for a MAYBE state, initially took from the docopt file.
+   float zcr;
+   float last_feature; /* for debuggin purposes */
 } VAD_DATA;
 
 /* Call this function before using VAD: 
    It should return allocated and initialized values of vad_data
 
    sampling_rate: ... the sampling rate */
-VAD_DATA *vad_open(float sampling_rate, float alpha1);
+VAD_DATA *vad_open(float sampling_rate, float alpha0, float alpha1, float alpha2, float t_remaining_orig);
 
 /* vad works frame by frame.
    This function returns the frame size so that the program knows how

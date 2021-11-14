@@ -6,10 +6,13 @@ Usage:
    vad --version
 
 Options:
-   -i FILE, --input-wav=FILE   WAVE file for voice activity detection
-   -o FILE, --output-vad=FILE  Label file with the result of VAD
-   -w FILE, --output-wav=FILE  WAVE file with silences cleared
-   -1 FLOAT, --alpha1=FLOAT Ganancia para obtener el umbral de deteccion 1 [default: 9]
+   -i FILE, --input-wav=FILE        WAVE file for voice activity detection
+   -o FILE, --output-vad=FILE       Label file with the result of VAD
+   -w FILE, --output-wav=FILE       WAVE file with silences cleared
+   -0 FLOAT, --alpha0=FLOAT         k0 threshold [default: 6.4]
+   -1 FLOAT, --alpha1=FLOAT         k1 threshold [default: 0]
+   -2 FLOAT, --alpha2=FLOAT         k2 threshold [default: 50]
+   -t FLOAT, --t_remaining=FLOAT    time threshold [default: 400]
    -v, --verbose  Show debug information
    -h, --help     Show this screen
    --version      Show the version of the project

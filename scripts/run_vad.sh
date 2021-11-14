@@ -5,8 +5,8 @@
 
 # Write here the name and path of your program and database
 DIR_P2=$HOME/PAV/P2
-DB=$DIR_P2/db.v4
-CMD="$DIR_P2/bin/vad --alpha1=$1"
+DB=$DIR_P2/db.v4 # Base de Datos (Data Base)
+CMD="$DIR_P2/bin/vad --alpha1=$1" 
 
 for filewav in $DB/*/*wav; do
 #    echo
@@ -26,6 +26,7 @@ for filewav in $DB/*/*wav; do
 
 done
 
-scripts/vad_evaluation.pl $DB/*/*lab
+# vad_evaluation.p1 con los ficheros de la bade de datos db.v4
+scripts/vad_evaluation.pl $DB/*/*lab 
 
 exit 0
