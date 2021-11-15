@@ -107,8 +107,8 @@ Ejercicios
 
 	> El etiquetado manual de los segmentos de voz y silencio se adjunta en las siguientes capturas:
 	>
-	> ![](img/etiquetado_manual_1) 
-	> <img src="img/etiquetado_manual_2" width="800" align="center">
+	> <img src="img/etiquetado_manual_1.PNG" width="800" align="center"> 
+	> <img src="img/etiquetado_manual_2.PNG" width="800" align="center">
 
 - A la vista de la gráfica, indique qué valores considera adecuados para las magnitudes siguientes:
 
@@ -148,8 +148,8 @@ Ejercicios
 - Inserte una gráfica en la que se vea con claridad la señal temporal, el etiquetado manual y la detección
   automática conseguida para el fichero grabado al efecto. 
 
-	> <img src="img/detección_automática_1" width="800" align="center">
-	> <img src="img/detección_automática_2" width="800" align="center">
+	> <img src="img/detección_automática_1.PNG" width="800" align="center">
+	> <img src="img/detección_automática_2.PNG" width="800" align="center">
 
 - Explique, si existen. las discrepancias entre el etiquetado manual y la detección automática.
 
@@ -169,7 +169,7 @@ Ejercicios
 	> la detección automática obtenemos más silencios que se marcan como voz, pero no tantos segmentos de voz
 	> que se marquen como silencio. Finalmente, obtenemos un *F-score* total de **90.61%**.
 	>
-	> <img src="img/summary" width="800" align="center">
+	> <img src="img/summary.PNG" width="800" align="center">
 
 
 ### Trabajos de ampliación
@@ -185,7 +185,7 @@ Ejercicios
 - Si ha usado `docopt_c` para realizar la gestión de las opciones y argumentos del programa `vad`, inserte
   una captura de pantalla en la que se vea el mensaje de ayuda del programa.
 
-	> <img src="img/docopt" width="800" align="center">
+	> <img src="img/docopt.PNG" width="800" align="center">
 
 ### Contribuciones adicionales y/o comentarios acerca de la práctica
 
