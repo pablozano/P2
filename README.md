@@ -107,7 +107,7 @@ Ejercicios
 
 	> El etiquetado manual de los segmentos de voz y silencio se adjunta en las siguientes capturas:
 	>
-	> <img src="img/etiquetado_manual_1" width="800" align="center">
+	> ![](img/etiquetado_manual_1) 
 	> <img src="img/etiquetado_manual_2" width="800" align="center">
 
 - A la vista de la gráfica, indique qué valores considera adecuados para las magnitudes siguientes:
